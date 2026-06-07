@@ -1,0 +1,70 @@
+Accuracy: 100.00%
+
+                      precision    recall  f1-score   support
+
+synthetic_person_001       1.00      1.00      1.00         6
+synthetic_person_002       1.00      1.00      1.00         6
+synthetic_person_003       1.00      1.00      1.00         6
+synthetic_person_004       1.00      1.00      1.00         6
+synthetic_person_005       1.00      1.00      1.00         6
+synthetic_person_006       1.00      1.00      1.00         6
+synthetic_person_007       1.00      1.00      1.00         6
+synthetic_person_008       1.00      1.00      1.00         6
+synthetic_person_009       1.00      1.00      1.00         6
+synthetic_person_010       1.00      1.00      1.00         6
+synthetic_person_011       1.00      1.00      1.00         6
+synthetic_person_012       1.00      1.00      1.00         6
+synthetic_person_013       1.00      1.00      1.00         6
+synthetic_person_014       1.00      1.00      1.00         6
+synthetic_person_015       1.00      1.00      1.00         6
+synthetic_person_016       1.00      1.00      1.00         6
+synthetic_person_017       1.00      1.00      1.00         6
+synthetic_person_018       1.00      1.00      1.00         6
+synthetic_person_019       1.00      1.00      1.00         6
+synthetic_person_020       1.00      1.00      1.00         6
+synthetic_person_021       1.00      1.00      1.00         6
+synthetic_person_022       1.00      1.00      1.00         6
+synthetic_person_023       1.00      1.00      1.00         6
+synthetic_person_024       1.00      1.00      1.00         6
+synthetic_person_025       1.00      1.00      1.00         6
+synthetic_person_026       1.00      1.00      1.00         6
+synthetic_person_027       1.00      1.00      1.00         6
+synthetic_person_028       1.00      1.00      1.00         6
+synthetic_person_029       1.00      1.00      1.00         6
+synthetic_person_030       1.00      1.00      1.00         6
+synthetic_person_031       1.00      1.00      1.00         6
+synthetic_person_032       1.00      1.00      1.00         6
+synthetic_person_033       1.00      1.00      1.00         6
+synthetic_person_034       1.00      1.00      1.00         6
+synthetic_person_035       1.00      1.00      1.00         6
+synthetic_person_036       1.00      1.00      1.00         6
+synthetic_person_037       1.00      1.00      1.00         6
+synthetic_person_038       1.00      1.00      1.00         6
+synthetic_person_039       1.00      1.00      1.00         6
+synthetic_person_040       1.00      1.00      1.00         6
+synthetic_person_041       1.00      1.00      1.00         6
+synthetic_person_042       1.00      1.00      1.00         6
+synthetic_person_043       1.00      1.00      1.00         6
+synthetic_person_044       1.00      1.00      1.00         6
+synthetic_person_045       1.00      1.00      1.00         6
+synthetic_person_046       1.00      1.00      1.00         6
+synthetic_person_047       1.00      1.00      1.00         6
+synthetic_person_048       1.00      1.00      1.00         6
+synthetic_person_049       1.00      1.00      1.00         6
+synthetic_person_050       1.00      1.00      1.00         6
+synthetic_person_051       1.00      1.00      1.00         6
+synthetic_person_052       1.00      1.00      1.00         6
+synthetic_person_053       1.00      1.00      1.00         6
+synthetic_person_054       1.00      1.00      1.00         6
+synthetic_person_055       1.00      1.00      1.00         6
+synthetic_person_056       1.00      1.00      1.00         6
+synthetic_person_057       1.00      1.00      1.00         6
+synthetic_person_058       1.00      1.00      1.00         6
+synthetic_person_059       1.00      1.00      1.00         6
+synthetic_person_060       1.00      1.00      1.00         6
+synthetic_person_061       1.00      1.00      1.00         6
+synthetic_person_062       1.00      1.00      1.00         6
+
+            accuracy                           1.00       372
+           macro avg       1.00      1.00      1.00       372
+        weighted avg       1.00      1.00      1.00       372

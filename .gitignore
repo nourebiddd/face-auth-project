@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+venv/
+env/
+.env/
+
+# Face image data (too large + biometric data)
+data/
+
+# Trained model / face encodings (biometric data)
+encodings/features.pkl
+encodings/lbph_model.xml
+
+# Pickle files in results (may contain face encodings)
+results/**/*.pkl
+
+# Intruder photos (personal data)
+intruder_logs/
+
+# LFW dataset archive (large dataset)
+archive/
+
+# macOS
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Misc
+*.log

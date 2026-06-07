@@ -1,0 +1,12 @@
+{
+  "experiment": 2,
+  "data_type": "synthetic",
+  "tp": 19,
+  "fn": 1,
+  "tn": 20,
+  "fp": 0,
+  "FAR": 0.0,
+  "FRR": 5.0,
+  "accuracy": 97.5,
+  "far_gap_vs_exp1": -10.0
+}

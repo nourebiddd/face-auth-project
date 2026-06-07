@@ -1,0 +1,70 @@
+Accuracy: 99.53%
+
+                           precision    recall  f1-score   support
+
+         Alejandro_Toledo       1.00      1.00      1.00         8
+             Alvaro_Uribe       0.88      1.00      0.93         7
+          Amelie_Mauresmo       1.00      1.00      1.00         6
+             Andre_Agassi       1.00      1.00      1.00         7
+           Angelina_Jolie       1.00      1.00      1.00         6
+             Ariel_Sharon       1.00      1.00      1.00        16
+    Arnold_Schwarzenegger       1.00      0.88      0.93         8
+     Atal_Bihari_Vajpayee       1.00      1.00      1.00         6
+             Bill_Clinton       1.00      1.00      1.00         6
+             Carlos_Menem       1.00      1.00      1.00         6
+             Colin_Powell       1.00      0.98      0.99        47
+            David_Beckham       1.00      1.00      1.00         6
+          Donald_Rumsfeld       1.00      1.00      1.00        24
+         George_Robertson       1.00      1.00      1.00         6
+            George_W_Bush       1.00      1.00      1.00       106
+        Gerhard_Schroeder       1.00      1.00      1.00        22
+  Gloria_Macapagal_Arroyo       1.00      1.00      1.00         9
+               Gray_Davis       1.00      1.00      1.00         6
+          Guillermo_Coria       1.00      1.00      1.00         6
+             Hamid_Karzai       1.00      1.00      1.00         6
+                Hans_Blix       1.00      1.00      1.00         8
+              Hugo_Chavez       1.00      1.00      1.00        14
+              Igor_Ivanov       1.00      1.00      1.00         6
+               Jack_Straw       1.00      1.00      1.00         6
+           Jacques_Chirac       1.00      1.00      1.00        10
+            Jean_Chretien       1.00      1.00      1.00        11
+         Jennifer_Aniston       1.00      1.00      1.00         6
+        Jennifer_Capriati       1.00      1.00      1.00         8
+           Jennifer_Lopez       1.00      1.00      1.00         6
+        Jeremy_Greenstock       1.00      1.00      1.00         6
+              Jiang_Zemin       1.00      1.00      1.00         6
+            John_Ashcroft       1.00      1.00      1.00        11
+          John_Negroponte       1.00      1.00      1.00         6
+         Jose_Maria_Aznar       1.00      1.00      1.00         6
+      Juan_Carlos_Ferrero       1.00      1.00      1.00         6
+        Junichiro_Koizumi       1.00      1.00      1.00        12
+               Kofi_Annan       1.00      1.00      1.00         6
+               Laura_Bush       1.00      1.00      1.00         8
+        Lindsay_Davenport       1.00      1.00      1.00         6
+           Lleyton_Hewitt       1.00      1.00      1.00         8
+Luiz_Inacio_Lula_da_Silva       1.00      1.00      1.00        10
+            Mahmoud_Abbas       1.00      1.00      1.00         6
+    Megawati_Sukarnoputri       1.00      1.00      1.00         7
+        Michael_Bloomberg       1.00      1.00      1.00         6
+              Naomi_Watts       1.00      1.00      1.00         6
+          Nestor_Kirchner       1.00      0.86      0.92         7
+              Paul_Bremer       1.00      1.00      1.00         6
+             Pete_Sampras       1.00      1.00      1.00         6
+     Recep_Tayyip_Erdogan       1.00      1.00      1.00         6
+            Ricardo_Lagos       1.00      1.00      1.00         6
+             Roh_Moo-hyun       1.00      1.00      1.00         6
+         Rudolph_Giuliani       1.00      1.00      1.00         6
+           Saddam_Hussein       1.00      1.00      1.00         6
+          Serena_Williams       1.00      1.00      1.00        10
+        Silvio_Berlusconi       1.00      1.00      1.00         7
+              Tiger_Woods       1.00      1.00      1.00         6
+              Tom_Daschle       1.00      1.00      1.00         6
+                Tom_Ridge       1.00      1.00      1.00         7
+               Tony_Blair       0.94      1.00      0.97        29
+              Vicente_Fox       1.00      1.00      1.00         6
+           Vladimir_Putin       1.00      1.00      1.00        10
+             Winona_Ryder       1.00      1.00      1.00         6
+
+                 accuracy                           1.00       641
+                macro avg       1.00      1.00      1.00       641
+             weighted avg       1.00      1.00      1.00       641

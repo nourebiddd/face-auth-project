@@ -1,0 +1,14 @@
+{
+  "experiment": 1,
+  "data_type": "real",
+  "train_photos_per_person": 10,
+  "test_photos_per_person": 5,
+  "n_intruders_tested": 20,
+  "tp": 20,
+  "fn": 0,
+  "tn": 18,
+  "fp": 2,
+  "FAR": 10.0,
+  "FRR": 0.0,
+  "accuracy": 95.0
+}

@@ -1,0 +1,6 @@
+{
+  "data_type": "real",
+  "n_samples": 3203,
+  "n_classes": 62,
+  "accuracy": 0.9953
+}

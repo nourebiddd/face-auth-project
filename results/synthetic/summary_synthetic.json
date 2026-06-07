@@ -1,0 +1,6 @@
+{
+  "data_type": "synthetic",
+  "n_samples": 1860,
+  "n_classes": 62,
+  "accuracy": 1.0
+}

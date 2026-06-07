@@ -1,0 +1,682 @@
+\documentclass[aspectratio=169]{beamer}
+
+% ── Theme ─────────────────────────────────────────────────────────────────────
+\usetheme{Madrid}
+\usecolortheme{default}
+\setbeamercolor{palette primary}{bg=blue!70!black, fg=white}
+\setbeamercolor{palette secondary}{bg=blue!55!black, fg=white}
+\setbeamercolor{palette tertiary}{bg=blue!40!black, fg=white}
+\setbeamercolor{palette quaternary}{bg=blue!30!black, fg=white}
+\setbeamercolor{structure}{fg=blue!60!black}
+\setbeamercolor{block title}{bg=blue!70!black, fg=white}
+\setbeamercolor{block body}{bg=blue!5}
+\setbeamercolor{alerted text}{fg=red!70!black}
+\setbeamerfont{frametitle}{size=\large, series=\bfseries}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{headline}{}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage{tikz}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usetikzlibrary{arrows.meta, positioning, shapes.rounded}
+
+% ── Title info ────────────────────────────────────────────────────────────────
+\title[Face Auth: Real vs.\ Synthetic]{Face Authentication Using Real vs.\ Synthetic Training Data}
+\subtitle{A Comparative Study Based on NIST FRTE Evaluation Metrics}
+\author{Nour Ebid}
+\institute{
+    M.Sc. Angewandte Informatik, Fachbereich 4 \\
+    Hochschule f{\"u}r Technik und Wirtschaft Berlin \\
+    \medskip
+    \textit{Seminar zu aktuellen Entwicklungen} \\
+    Betreuer: Frau Prof.\ Knaut
+}
+\date{SS 2026}
+
+% ──────────────────────────────────────────────────────────────────────────────
+\begin{document}
+
+% ── Slide 1: Title ────────────────────────────────────────────────────────────
+\begin{frame}
+\titlepage
+\end{frame}
+
+% Sections must be declared BEFORE tableofcontents
+\section{Motivation \& Research Question}
+\section{How the System Works}
+\section{Dataset \& Experimental Design}
+\section{What I Tried (and What Failed)}
+\section{The Final Approach}
+\section{Results}
+\section{Conclusion \& Next Steps}
+
+% ── Slide 2: Agenda ───────────────────────────────────────────────────────────
+\begin{frame}{Agenda}
+\tableofcontents
+\end{frame}
+
+% ── Slide 3: Motivation ───────────────────────────────────────────────────────
+\begin{frame}{Why Does This Matter?}
+
+\begin{columns}[T]
+\begin{column}{0.55\textwidth}
+    \textbf{The Problem with Real Biometric Data}
+    \begin{itemize}
+        \item Face authentication systems store real facial photos
+        \item These are sensitive biometric data under \textbf{GDPR Article 9}
+        \item Requires explicit consent, strict storage controls
+        \item If a database is breached → biometric data cannot be changed
+    \end{itemize}
+
+    \vspace{8pt}
+    \textbf{The Idea}
+    \begin{itemize}
+        \item What if we register users using \textbf{AI-generated} versions of their face?
+        \item Same face, different imaging conditions
+        \item No real biometric photo needs to be stored
+    \end{itemize}
+\end{column}
+\begin{column}{0.42\textwidth}
+    \begin{block}{Core Research Question}
+        \small
+        \textit{Can a face authentication system trained on AI-generated synthetic images of a user achieve performance comparable to one trained on real photographs of the same person?}
+    \end{block}
+    \vspace{8pt}
+    \begin{alertblock}{Hypothesis}
+        \small
+        Synthetic registration will achieve a \textbf{FAR within 15 percentage points} of real registration, under NIST FRTE-aligned conditions.
+    \end{alertblock}
+\end{column}
+\end{columns}
+\end{frame}
+
+% ── Slide 4: How FaceNet Works ────────────────────────────────────────────────
+\begin{frame}{How the Authentication System Works}
+
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+    \textbf{FaceNet (Google, 2015)}
+    \begin{itemize}
+        \item Deep CNN: maps any face image to a \textbf{128-dimensional vector}
+        \item Same person $\rightarrow$ vectors close together
+        \item Different people $\rightarrow$ vectors far apart
+        \item Verification: compute L2 distance
+    \end{itemize}
+    \vspace{6pt}
+    \[
+    d = \|\mathbf{e}_q - \bar{\mathbf{e}}_u\|_2
+    \]
+    \[
+    \text{Decision} = \begin{cases} \text{VERIFIED} & d < 10.0 \\ \text{REJECTED} & d \geq 10.0 \end{cases}
+    \]
+\end{column}
+\begin{column}{0.48\textwidth}
+\centering
+\begin{tikzpicture}[
+    box/.style={draw, rounded corners=3pt, text width=2.8cm, align=center,
+                minimum height=0.7cm, font=\scriptsize, fill=blue!10},
+    sbox/.style={draw, rounded corners=3pt, text width=2.8cm, align=center,
+                minimum height=0.7cm, font=\scriptsize, fill=orange!15},
+    arr/.style={->, thick, >=stealth, shorten >=1pt}
+]
+\node[box] (tr) at (0,0) {Training Photos};
+\node[box] (fn1) at (0,-1.1) {FaceNet};
+\node[box] (avg) at (0,-2.2) {Mean Embedding $\bar{\mathbf{e}}_u$};
+\node[box, fill=green!15] (db) at (0,-3.3) {Reference DB};
+\draw[arr] (tr)--(fn1); \draw[arr] (fn1)--(avg); \draw[arr] (avg)--(db);
+\node[font=\scriptsize\bfseries] at (0, 0.55) {\textcolor{blue!70!black}{Registration}};
+
+\node[sbox] (q) at (3.2,0) {Query Photo};
+\node[sbox] (fn2) at (3.2,-1.1) {FaceNet};
+\node[sbox] (dist) at (3.2,-2.2) {L2 Distance};
+\node[sbox, fill=red!12] (dec) at (3.2,-3.3) {$d < \theta$?};
+\draw[arr] (q)--(fn2); \draw[arr] (fn2)--(dist); \draw[arr] (dist)--(dec);
+\draw[arr, dashed] (db)--(dist);
+\node[font=\scriptsize\bfseries] at (3.2, 0.55) {\textcolor{orange!70!black}{Authentication}};
+\end{tikzpicture}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+% ── Slide 5: Metrics ──────────────────────────────────────────────────────────
+\begin{frame}{Evaluation Metrics — NIST FRTE}
+
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+    \begin{block}{FAR — False Accept Rate}
+        Fraction of \textbf{impostors} incorrectly accepted \\
+        \vspace{4pt}
+        $\rightarrow$ High FAR = \alert{security risk}
+    \end{block}
+    \vspace{8pt}
+    \begin{block}{FRR — False Reject Rate}
+        Fraction of \textbf{genuine users} incorrectly rejected \\
+        \vspace{4pt}
+        $\rightarrow$ High FRR = \alert{poor usability}
+    \end{block}
+\end{column}
+\begin{column}{0.48\textwidth}
+    \begin{block}{The Trade-off}
+        \begin{itemize}
+            \item Tighter threshold $\theta$ $\rightarrow$ lower FAR, higher FRR
+            \item Looser threshold $\theta$ $\rightarrow$ lower FRR, higher FAR
+            \item No free lunch: security vs.\ convenience
+        \end{itemize}
+    \end{block}
+    \vspace{8pt}
+    \begin{exampleblock}{This Study}
+        Fixed threshold $\theta = 10.0$ for both experiments. \\
+        Primary comparison metric: \textbf{FAR}
+    \end{exampleblock}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+% ── Slide 6: Dataset ──────────────────────────────────────────────────────────
+\begin{frame}{Dataset \& Train/Test Split}
+
+\begin{columns}[T]
+\begin{column}{0.55\textwidth}
+    \textbf{Registered Users (``Friends'')}
+    \begin{itemize}
+        \item 4 people: \textit{amr, adel, otto, mazen}
+        \item 15 real photos each (smartphone, everyday conditions)
+        \item \textbf{First 10 photos} $\rightarrow$ training / generation
+        \item \textbf{Last 5 photos} $\rightarrow$ held-out test set \\
+              (never seen during registration or synthesis)
+    \end{itemize}
+    \vspace{6pt}
+    \textbf{Impostors}
+    \begin{itemize}
+        \item 20 AI-generated faces (StyleGAN2)
+        \item From \textit{thispersondoesnotexist.com}
+        \item No identity relationship to any registered user
+        \item Same 20 used in both experiments
+    \end{itemize}
+\end{column}
+\begin{column}{0.42\textwidth}
+    \begin{alertblock}{Why Strict Split?}
+        \small
+        An earlier version of the experiment used all 15 photos for generation and tested on those same photos. Result: \textbf{100\% accuracy} — unrealistic.
+
+        \vspace{4pt}
+        This is \textbf{circular evaluation} — the system effectively ``cheats'' by having seen the test images.
+
+        \vspace{4pt}
+        Fix: 10 photos for training, 5 completely held out. Both experiments share the same test set.
+    \end{alertblock}
+\end{column}
+\end{columns}
+\end{frame}
+
+% ── Slide 7: Two Experiments ──────────────────────────────────────────────────
+\begin{frame}{Experiment Design — Two Conditions}
+
+\vspace{4pt}
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+    \begin{block}{Experiment 1 — Real Registration}
+        \begin{itemize}
+            \item Register from 10 real photos per person
+            \item No additional processing
+            \item Test on held-out 5 real photos + 20 impostors
+            \item \textbf{Baseline condition}
+        \end{itemize}
+    \end{block}
+\end{column}
+\begin{column}{0.48\textwidth}
+    \begin{block}{Experiment 2 — Synthetic Registration}
+        \begin{itemize}
+            \item Generate 15 synthetic images from 10 real photos
+            \item Register from synthetic images
+            \item Test on \textbf{same} held-out 5 real photos + same 20 impostors
+            \item \textbf{Experimental condition}
+        \end{itemize}
+    \end{block}
+\end{column}
+\end{columns}
+
+\vspace{12pt}
+\begin{center}
+\begin{tikzpicture}
+\draw[->, very thick, >=stealth, blue!60!black] (0,0) -- (10,0);
+\filldraw[blue!30] (0,-0.15) rectangle (6.5,0.15);
+\filldraw[red!40] (6.5,-0.15) rectangle (10,0.15);
+\node[above, font=\small\bfseries] at (3.25, 0.15) {First 10 photos --- Training / Generation};
+\node[above, font=\small\bfseries] at (8.25, 0.15) {Last 5 --- Test only};
+\node[below, font=\scriptsize] at (0,0) {photo 1};
+\node[below, font=\scriptsize] at (10,0) {photo 15};
+\node[below, font=\scriptsize] at (6.5,0) {photo 10};
+\draw[dashed, thick] (6.5,-0.4)--(6.5,0.4);
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
+% ── Slide 8: Failed attempt 1 ─────────────────────────────────────────────────
+\begin{frame}{What I Tried First: Face Swap (Failed)}
+
+\begin{columns}[T]
+\begin{column}{0.55\textwidth}
+    \textbf{The Idea}
+    \begin{itemize}
+        \item Download 1,860 AI-generated faces (StyleGAN2)
+        \item Paste my friends' faces onto AI bodies using \textbf{Poisson blending} (\texttt{cv2.seamlessClone})
+        \item Result looks like my friend, but on a synthetic background
+    \end{itemize}
+    \vspace{8pt}
+    \textbf{The Result}
+    \begin{itemize}
+        \item[\alert{✗}] \alert{FRR = 75\%} — rejected 3 in every 4 genuine attempts
+    \end{itemize}
+    \vspace{8pt}
+    \textbf{Why it failed}
+    \begin{itemize}
+        \item $\approx$50\% of the AI base images were \textbf{female}
+        \item All 4 friends are \textbf{male}
+        \item FaceNet encodes gender-correlated geometry (jaw, brow, bone structure)
+        \item Blended embedding ended up ``halfway'' between male and female → too far from the genuine embedding → rejected
+    \end{itemize}
+\end{column}
+\begin{column}{0.42\textwidth}
+    \begin{alertblock}{Lesson}
+        The foreign base face's \textbf{demographic attributes} contaminate the embedding — even after blending, the gender signal from the base face survives in the output embedding.
+    \end{alertblock}
+    \vspace{10pt}
+    \begin{center}
+    \Large\alert{FAR/FRR at this stage:}\\[4pt]
+    \begin{tabular}{cc}
+    \textbf{FRR} & \textbf{75\%} \\
+    \end{tabular}
+    \end{center}
+\end{column}
+\end{columns}
+\end{frame}
+
+% ── Slide 9: Failed attempt 2 ─────────────────────────────────────────────────
+\begin{frame}{Second Attempt: Gender-Filtered Face Swap (Failed Too)}
+
+\begin{columns}[T]
+\begin{column}{0.55\textwidth}
+    \textbf{The Fix I Tried}
+    \begin{itemize}
+        \item Use InsightFace's gender classifier to filter the pool
+        \item Keep only male-presenting base faces (confidence $> 0.6$)
+        \item Re-run the whole pipeline
+    \end{itemize}
+    \vspace{8pt}
+    \textbf{The Result}
+    \begin{itemize}
+        \item[\alert{✗}] FRR \textbf{still high} — system kept rejecting genuine users
+    \end{itemize}
+    \vspace{8pt}
+    \textbf{Root Cause (after investigation)}
+    \begin{itemize}
+        \item Poisson blending creates smooth pixel transitions at face boundary
+        \item These introduce \textbf{low-frequency artifacts} in the image
+        \item FaceNet detects these artifacts → genuine L2 scores shift \textbf{upward by 1--2 units}
+        \item With $\theta = 10.0$, that shift is enough to push scores above the threshold → rejection
+    \end{itemize}
+\end{column}
+\begin{column}{0.42\textwidth}
+    \begin{alertblock}{Lesson}
+        The blending algorithm itself adds a \textbf{systematic bias} to every embedding — independent of which base face is used.
+    \end{alertblock}
+    \vspace{10pt}
+    \begin{block}{Conclusion}
+        Face swapping is \textbf{fundamentally broken} for this use case:
+        \begin{itemize}
+            \item Foreign identity contaminates embedding
+            \item Blending artifacts add bias
+            \item Both are unavoidable with Poisson blending
+        \end{itemize}
+        $\rightarrow$ \textbf{Abandon face swap entirely}
+    \end{block}
+\end{column}
+\end{columns}
+\end{frame}
+
+% ── Slide 10: The Real Solution ───────────────────────────────────────────────
+\begin{frame}{The Solution: Augmentation Pipeline}
+
+\textbf{Key insight:} lighting, colour, camera noise, and pose are \textit{imaging variables} — they change how a photo looks, but not \textit{whose} face it is.
+
+\vspace{8pt}
+\begin{center}
+\begin{tikzpicture}[
+    stage/.style={draw, rounded corners=3pt, text width=3.8cm, align=left,
+                  minimum height=0.65cm, font=\scriptsize, fill=yellow!15,
+                  inner xsep=5pt, inner ysep=3pt},
+    arr/.style={->, thick, >=stealth}
+]
+\node[stage] (s1) {\textbf{1. Face Alignment} \\ InsightFace 5-keypoint affine warp \\ $\to$ 256$\times$256 frontal template};
+\node[stage, right=0.35cm of s1] (s2) {\textbf{2. Lighting} \\ Gamma correction \\ $\gamma \sim \mathcal{U}(0.55,\,1.60)$};
+\node[stage, right=0.35cm of s2] (s3) {\textbf{3. Colour Temp.} \\ Warm / cool / neutral \\ RGB channel scaling};
+\node[stage, right=0.35cm of s3] (s4) {\textbf{4. Skin Tone} \\ CLAHE on LAB \\ L-channel};
+\node[stage, right=0.35cm of s4] (s5) {\textbf{5. Camera + Pose} \\ Gaussian blur + noise \\ Rotation $\pm 12°$};
+\draw[arr] (s1)--(s2); \draw[arr] (s2)--(s3); \draw[arr] (s3)--(s4); \draw[arr] (s4)--(s5);
+\end{tikzpicture}
+\end{center}
+
+\vspace{8pt}
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+    \textbf{What it does:}
+    \begin{itemize}
+        \item Standardises head pose → removes pose variation
+        \item Simulates different lighting conditions
+        \item Simulates different cameras and environments
+        \item Normalises skin tone appearance
+        \item Adds realistic camera noise and slight tilt
+    \end{itemize}
+\end{column}
+\begin{column}{0.48\textwidth}
+    \begin{exampleblock}{Why This Works}
+        \begin{itemize}
+            \item No foreign base face introduced
+            \item No blending artifacts
+            \item All parameters randomised independently → 15 unique synthetic images per person from 10 source photos
+            \item Identity is fully preserved
+        \end{itemize}
+    \end{exampleblock}
+\end{column}
+\end{columns}
+\end{frame}
+
+% ── Slide 11: Experiment 1 Results ────────────────────────────────────────────
+\begin{frame}{Experiment 1 Results — Real Registration (Baseline)}
+
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+    \begin{center}
+    \begin{tabular}{lcc}
+    \toprule
+    & \textbf{Value} & \textbf{Detail} \\
+    \midrule
+    True Positives (TP) & 20/20 & All users verified \\
+    False Negatives (FN) & 0/20  & 0 friends rejected \\
+    True Negatives (TN) & 18/20 & \\
+    False Positives (FP) & 2/20  & Scores: 6.60, 5.56 \\
+    \midrule
+    \textbf{FAR} & \textbf{10.0\%} & \\
+    \textbf{FRR} & \textbf{0.0\%}  & \\
+    \textbf{Accuracy} & \textbf{95.0\%} & \\
+    \bottomrule
+    \end{tabular}
+    \end{center}
+
+    \vspace{8pt}
+    \textbf{Per-user:} every friend was 5/5 verified (100\% TPR each)
+\end{column}
+\begin{column}{0.46\textwidth}
+    \begin{block}{Interpretation}
+        \begin{itemize}
+            \item Real training photos give the system wide embedding coverage → all genuine queries pass
+            \item 2 impostors slipped through because their AI-generated faces happened to produce embeddings close to a registered user's cluster (scores 6.60 and 5.56 — well inside $\theta = 10.0$)
+            \item FAR = 10\% is the baseline to beat
+        \end{itemize}
+    \end{block}
+\end{column}
+\end{columns}
+\end{frame}
+
+% ── Slide 12: Experiment 2 Results ────────────────────────────────────────────
+\begin{frame}{Experiment 2 Results — Synthetic Registration}
+
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+    \begin{center}
+    \begin{tabular}{lcc}
+    \toprule
+    & \textbf{Value} & \textbf{Detail} \\
+    \midrule
+    True Positives (TP) & 19/20 & \\
+    False Negatives (FN) & 1/20  & Score: 11.47 (\textit{otto}) \\
+    True Negatives (TN) & 20/20 & All impostors caught \\
+    False Positives (FP) & 0/20  & None accepted \\
+    \midrule
+    \textbf{FAR} & \textbf{0.0\%}  & \\
+    \textbf{FRR} & \textbf{5.0\%}  & \\
+    \textbf{Accuracy} & \textbf{97.5\%} & \\
+    \bottomrule
+    \end{tabular}
+    \end{center}
+
+    \vspace{8pt}
+    \textbf{Per-user:} amr, adel, mazen = 5/5; otto = 4/5
+\end{column}
+\begin{column}{0.46\textwidth}
+    \begin{exampleblock}{What Happened with Otto?}
+        \small
+        One of otto's held-out photos scored 11.47 — just 1.47 above the threshold.
+
+        The controlled pipeline produces \textbf{tight embedding clusters}. Otto's test photo had natural variation (lighting, expression) that the synthetic training set didn't fully cover $\rightarrow$ pushed just outside the boundary.
+    \end{exampleblock}
+    \vspace{6pt}
+    \begin{alertblock}{FAR = 0\%}
+        \small
+        The tighter synthetic clusters sit further from impostor embeddings $\rightarrow$ no impostor can accidentally fall inside the boundary.
+    \end{alertblock}
+\end{column}
+\end{columns}
+\end{frame}
+
+% ── Slide 13: Comparison ──────────────────────────────────────────────────────
+\begin{frame}{Head-to-Head Comparison}
+
+\begin{columns}[T]
+\begin{column}{0.52\textwidth}
+    \vspace{4pt}
+    \begin{center}
+    \begin{tabular}{lccc}
+    \toprule
+    \textbf{Metric} & \textbf{Exp 1} & \textbf{Exp 2} & \textbf{$\Delta$} \\
+    & Real & Synthetic & \\
+    \midrule
+    FAR      & 10.0\% & \textbf{0.0\%}  & $-$10.0 pp \\
+    FRR      & \textbf{0.0\%}  & 5.0\%  & $+$5.0 pp \\
+    Accuracy & 95.0\% & \textbf{97.5\%} & $+$2.5 pp \\
+    \midrule
+    Friends verified  & 20/20 & 19/20 & $-$1 \\
+    Impostors blocked & 18/20 & 20/20 & $+$2 \\
+    \bottomrule
+    \end{tabular}
+    \end{center}
+\end{column}
+\begin{column}{0.44\textwidth}
+    \begin{block}{FAR/FRR Trade-off Explained}
+        \small
+        Controlled synthesis $\rightarrow$ \textbf{tighter embedding cluster}
+        \begin{itemize}
+            \item Impostors can't get close to cluster centre \\ $\rightarrow$ \textbf{FAR drops}
+            \item Genuine test photos with natural variation may fall outside the tight cluster \\ $\rightarrow$ \textbf{FRR rises slightly}
+        \end{itemize}
+        This is predictable from embedding geometry — not a bug, but a trade-off.
+    \end{block}
+\end{column}
+\end{columns}
+
+\vspace{10pt}
+\begin{center}
+\begin{tikzpicture}
+    \fill[green!20, draw=green!60!black, rounded corners=4pt] (0,0) rectangle (11,0.7);
+    \node[font=\bfseries\large] at (5.5, 0.35) {FAR gap = $-$10.0 pp $<$ 15 pp threshold \quad $\Rightarrow$ \quad \textcolor{green!50!black}{HYPOTHESIS CONFIRMED ✓}};
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
+% ── Slide 14: Why Synthetic Did Better ───────────────────────────────────────
+\begin{frame}{Why Did Synthetic Outperform Real on FAR?}
+
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+    \textbf{Real Training Data}
+    \begin{itemize}
+        \item Photos taken under varying, uncontrolled conditions
+        \item Embeddings are \textbf{spread out} across a wider region
+        \item The cluster centre (reference vector) is less precisely located
+        \item Some impostors may accidentally fall inside the wider boundary
+    \end{itemize}
+    \vspace{6pt}
+    \begin{center}
+    \begin{tikzpicture}[scale=0.75]
+        \fill[blue!10, draw=blue!40] (0,0) circle (1.2cm);
+        \node[font=\tiny, blue!70] at (0,0) {reference $\bar{\mathbf{e}}_u$};
+        \fill[blue!60] (0,0) circle (2pt);
+        \fill[blue!30] (0.5,0.6) circle (2pt);
+        \fill[blue!30] (-0.4,0.8) circle (2pt);
+        \fill[blue!30] (0.7,-0.5) circle (2pt);
+        \fill[red!70] (0.9,0.9) circle (3pt) node[right, font=\tiny, red] {impostor!};
+        \node[font=\tiny] at (0,-1.6) {wide cluster $\rightarrow$ higher FAR};
+    \end{tikzpicture}
+    \end{center}
+\end{column}
+\begin{column}{0.5\textwidth}
+    \textbf{Synthetic Training Data}
+    \begin{itemize}
+        \item Pipeline controls all imaging variables
+        \item Embeddings \textbf{cluster tightly} around the identity centre
+        \item Reference vector is precisely placed
+        \item Impostors are clearly separated from the cluster
+    \end{itemize}
+    \vspace{6pt}
+    \begin{center}
+    \begin{tikzpicture}[scale=0.75]
+        \fill[blue!15, draw=blue!50] (0,0) circle (0.65cm);
+        \node[font=\tiny, blue!70] at (0,0.1) {ref $\bar{\mathbf{e}}_u$};
+        \fill[blue!60] (0,0) circle (2pt);
+        \fill[blue!30] (0.2,0.3) circle (2pt);
+        \fill[blue!30] (-0.2,0.4) circle (2pt);
+        \fill[blue!30] (0.3,-0.2) circle (2pt);
+        \fill[red!70] (0.9,0.9) circle (3pt) node[right, font=\tiny, red] {impostor (far)};
+        \fill[orange!80] (-0.2,-0.95) circle (3pt) node[below, font=\tiny, orange!80!black] {otto FN};
+        \node[font=\tiny] at (0,-1.6) {tight cluster $\rightarrow$ FAR=0, slight FRR};
+    \end{tikzpicture}
+    \end{center}
+\end{column}
+\end{columns}
+\end{frame}
+
+% ── Slide 15: Limitations ────────────────────────────────────────────────────
+\begin{frame}{Limitations of This Study}
+
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+    \begin{alertblock}{Current Limitations}
+        \begin{itemize}
+            \item \textbf{Small scale:} only 4 users, 5 test photos each, 20 impostors — not enough for statistically significant conclusions
+            \item \textbf{Single threshold:} only $\theta = 10.0$ tested — no full DET curve
+            \item \textbf{Demographics:} all registered users are male — no diversity test
+            \item \textbf{Impostor type:} only AI-generated impostors tested, not real people attempting access
+            \item \textbf{Augmentation, not generation:} still requires a real photo as a starting point
+        \end{itemize}
+    \end{alertblock}
+\end{column}
+\begin{column}{0.48\textwidth}
+    \begin{block}{What the Results Do and Don't Mean}
+        \begin{itemize}
+            \item[\checkmark] Shows that controlled synthetic data \textit{can} work at pilot scale
+            \item[\checkmark] Identifies the correct failure mode of face-swap synthesis
+            \item[\checkmark] Provides a reproducible experimental framework
+            \vspace{4pt}
+            \item[\alert{✗}] Cannot make statistically significant claims with 40 test queries
+            \item[\alert{✗}] Cannot generalise across demographic groups yet
+        \end{itemize}
+    \end{block}
+\end{column}
+\end{columns}
+\end{frame}
+
+% ── Slide 16: Next Steps ──────────────────────────────────────────────────────
+\begin{frame}{What Comes Next — Final Paper (mid-June)}
+
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+    \textbf{Planned Improvements}
+    \begin{itemize}
+        \item \textbf{Full DET curve:} sweep $\theta$ from 1 to 20, plot FRR vs.\ FAR at every point — proper NIST FRTE format
+        \item \textbf{More data:} expand to more users, more test images, more impostors
+        \item \textbf{GAN-based synthesis:} use a diffusion model conditioned on identity (e.g.\ IP-Adapter) to generate faces with \textit{zero} real photos — the next step in fully removing biometric data
+        \item \textbf{Multi-model:} test same framework with ArcFace and compare
+        \item \textbf{Adaptive threshold:} per-user threshold based on cluster spread — would fix otto's false rejection
+    \end{itemize}
+\end{column}
+\begin{column}{0.46\textwidth}
+    \begin{block}{Timeline}
+        \small
+        \begin{tabular}{ll}
+        \textbf{By 30 Apr} & Complete Exp.\ 2 analysis \\
+        \textbf{By 15 May} & Comparison \& discussion \\
+        \textbf{By 31 May} & Full DET curve \\
+        \textbf{By 10 Jun} & Ethics section, future work \\
+        \textbf{Mid-Jun}   & \textbf{Final paper submission} \\
+        \end{tabular}
+    \end{block}
+    \vspace{8pt}
+    \begin{exampleblock}{Broader Goal}
+        \small
+        If GAN-based synthesis works comparably, it would mean a face authentication system could be registered \textbf{without ever storing a real biometric photo} — directly relevant to GDPR compliance.
+    \end{exampleblock}
+\end{column}
+\end{columns}
+\end{frame}
+
+% ── Slide 17: Conclusion ──────────────────────────────────────────────────────
+\begin{frame}{Conclusion}
+
+\begin{block}{Summary}
+\begin{itemize}
+    \item Built a face authentication system using FaceNet and evaluated it under NIST FRTE-aligned conditions
+    \item Compared two registration strategies: real photographs vs.\ AI-generated synthetic images
+    \item Two face-swap approaches failed — one due to gender mismatch in the base pool, one due to Poisson blending artifacts
+    \item The final augmentation pipeline (5 stages: alignment, lighting, colour, skin tone, camera) succeeded
+    \item After fixing the circular evaluation problem (proper 10/5 train/test split), results became valid
+\end{itemize}
+\end{block}
+
+\vspace{6pt}
+
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+    \begin{exampleblock}{Key Finding}
+        Synthetic model: \textbf{97.5\% accuracy, FAR = 0\%}\\
+        Real model: \textbf{95.0\% accuracy, FAR = 10\%}\\
+        \vspace{4pt}
+        FAR gap: $\mathbf{-10\,\text{pp}}$ $<$ 15 pp threshold\\
+        \textbf{$\Rightarrow$ Hypothesis confirmed}
+    \end{exampleblock}
+\end{column}
+\begin{column}{0.48\textwidth}
+    \begin{alertblock}{Take-Away}
+        Controlled synthetic training data is a \textbf{viable substitute} for real photographs in face authentication — at least at pilot scale. The FAR/FRR trade-off is predictable and explainable from embedding geometry.
+    \end{alertblock}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+% ── Slide 18: Thank you ───────────────────────────────────────────────────────
+\begin{frame}[plain]
+\begin{center}
+    \vspace{1.5cm}
+    {\Huge \textbf{Thank you}}\\[12pt]
+    {\large Questions?}\\[30pt]
+    \hrule
+    \vspace{12pt}
+    \begin{tabular}{rl}
+        \textbf{Name:}      & Nour Ebid \\
+        \textbf{Email:}     & Nour.Ebid@Student.HTW-Berlin.de \\
+        \textbf{Program:}   & M.Sc. Angewandte Informatik \\
+        \textbf{Seminar:}   & Seminar zu aktuellen Entwicklungen \\
+        \textbf{Betreuer:}  & Frau Prof.\ Knaut \\
+        \textbf{University:}& HTW Berlin, SS 2026 \\
+    \end{tabular}
+\end{center}
+\end{frame}
+
+\end{document}

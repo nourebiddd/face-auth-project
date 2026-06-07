@@ -1,0 +1,222 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{parskip}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{booktabs}
+\usepackage{array}
+
+\hypersetup{colorlinks=false}
+
+% Header / Footer
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\small Nour Ebid --- Seminar zu aktuellen Entwicklungen}
+\lhead{\small HTW Berlin, SS 2026}
+\rfoot{\small \thepage}
+
+% Section style
+\titleformat{\section}{\large\bfseries}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{black!70}}{}{0em}{}
+
+% List style
+\setlist[itemize,1]{leftmargin=1.2em, itemsep=4pt, parsep=0pt}
+\setlist[itemize,2]{leftmargin=1.5em, itemsep=2pt, parsep=0pt}
+
+\begin{document}
+
+% ── Title block ───────────────────────────────────────────────────────────────
+\begin{center}
+    {\LARGE\bfseries What I Did --- Project Progress Summary}\\[6pt]
+    {\large Face Authentication: Real vs.\ Synthetic Training Data}\\[10pt]
+    \begin{tabular}{rl}
+        \textbf{Student:}   & Nour Ebid \\
+        \textbf{Program:}   & M.Sc. Angewandte Informatik, Fachbereich 4 \\
+        \textbf{Seminar:}   & Seminar zu aktuellen Entwicklungen \\
+        \textbf{Betreuer:}  & Frau Prof.\ Knaut \\
+        \textbf{University:}& Hochschule f{\"u}r Technik und Wirtschaft Berlin \\
+        \textbf{Date:}      & May 2026 \\
+    \end{tabular}
+\end{center}
+
+\vspace{8pt}
+\hrule
+\vspace{12pt}
+
+% ── Step 1 ────────────────────────────────────────────────────────────────────
+\section*{Step 1 \quad Chose the Research Topic and Set Up the Project}
+
+\begin{itemize}
+    \item Decided to explore whether AI-generated (synthetic) face images can replace real photos in a face authentication system
+    \item The motivation: real biometric photos raise privacy concerns under GDPR — synthetic images could remove the need to store sensitive data
+    \item Set up the project folder, Python virtual environment, and installed the required libraries: \texttt{deepface}, \texttt{insightface}, \texttt{opencv-python}, \texttt{numpy}
+    \item Collected \textbf{15 real photos} of each of 4 friends (\textit{amr}, \textit{adel}, \textit{otto}, \textit{mazen}) using a smartphone under normal, everyday conditions
+    \item Downloaded \textbf{1,860 AI-generated face images} from \textit{thispersondoesnotexist.com} (StyleGAN2) to use as synthetic base images
+\end{itemize}
+
+% ── Step 2 ────────────────────────────────────────────────────────────────────
+\section*{Step 2 \quad Built the Base Authentication System}
+
+\begin{itemize}
+    \item Built \texttt{auth\_system.py}: a face authentication system using \textbf{FaceNet} accessed via the DeepFace library
+    \item How it works:
+    \begin{itemize}
+        \item \textbf{Registration:} each training photo is passed through FaceNet → produces a 128-dimensional embedding vector → all embeddings for one person are averaged into one reference vector → saved to a JSON file
+        \item \textbf{Authentication:} a query photo is embedded → L2 distance is computed against every stored reference → if the nearest distance is below threshold $\theta = 10.0$, access is granted
+    \end{itemize}
+    \item Chose \textbf{NIST FRTE metrics} (FAR and FRR) as the evaluation framework, since these are the standard for biometric system benchmarking
+    \item Defined the research hypothesis: synthetic-data registration will achieve a FAR within 15 percentage points of real-data registration
+\end{itemize}
+
+% ── Step 3 ────────────────────────────────────────────────────────────────────
+\section*{Step 3 \quad Ran Experiment 1 (Real Photos) as the Baseline}
+
+\begin{itemize}
+    \item Registered all 4 friends using their real photos, tested on the same photos, got initial results
+    \item Later refined this to a proper train/test split (see Step 7 below)
+    \item Final Experiment 1 setup: register on first 10 photos, test on last 5
+    \item Results: \textbf{FAR = 10\%, FRR = 0\%, Accuracy = 95\%}
+    \begin{itemize}
+        \item All 20 genuine test queries (4 friends × 5 photos) correctly verified
+        \item 2 out of 20 AI impostors incorrectly accepted (L2 scores: 6.60 and 5.56)
+    \end{itemize}
+    \item These 2 false acceptances made sense — some AI-generated faces happened to produce embeddings similar to a registered user's cluster
+\end{itemize}
+
+% ── Step 4 ────────────────────────────────────────────────────────────────────
+\section*{Step 4 \quad First Synthetic Approach: Face Swap (Failed)}
+
+\begin{itemize}
+    \item Idea: take my friends' faces and use Poisson blending (\texttt{cv2.seamlessClone}) to paste them onto randomly selected AI base faces → creates a "synthetic-looking" version of each person
+    \item Built the pipeline, generated synthetic images, ran Experiment 2 with them
+    \item \textbf{Result: FRR = 75\%} — the system rejected 3 out of every 4 genuine friend attempts
+    \item Investigated why:
+    \begin{itemize}
+        \item Found that approximately \textbf{50\% of the downloaded AI base images were female}
+        \item All 4 registered friends are male
+        \item FaceNet encodes gender-correlated facial geometry (jaw, brow, bone structure) in its embeddings
+        \item Blending a male face onto a female AI base produced an embedding that was "halfway between" — too far from the genuine male embedding to pass the threshold
+    \end{itemize}
+\end{itemize}
+
+% ── Step 5 ────────────────────────────────────────────────────────────────────
+\section*{Step 5 \quad Second Attempt: Gender-Filtered Face Swap (Also Failed)}
+
+\begin{itemize}
+    \item Thought the fix was simple: filter the AI base pool to only use male-presenting faces
+    \item Used InsightFace's gender classification (confidence $> 0.6$) to select only male bases
+    \item Re-ran the pipeline and Experiment 2
+    \item \textbf{Still failed} — FRR remained high
+    \item Diagnosed the new issue:
+    \begin{itemize}
+        \item The Poisson blending algorithm creates smooth pixel transitions at the face boundary
+        \item These transitions introduced \textbf{small low-frequency artifacts} that FaceNet detects
+        \item The genuine L2 scores were consistently shifted \textbf{upward by 1--2 units} across all users
+        \item With a threshold of 10.0, that shift was enough to push many genuine scores above it → rejections
+    \end{itemize}
+    \item Conclusion: the face swap approach has a fundamental problem — the foreign base face and the blending process both contaminate the embedding, regardless of which base face is used
+\end{itemize}
+
+% ── Step 6 ────────────────────────────────────────────────────────────────────
+\section*{Step 6 \quad Redesigned the Synthesis: Augmentation Pipeline}
+
+\begin{itemize}
+    \item Abandoned face swapping completely
+    \item New approach: instead of replacing the face's background, \textbf{transform the face itself} using controlled imaging parameters
+    \item Key insight: lighting, colour temperature, skin tone, camera noise, and pose are all \textit{imaging variables} — they change how a photo looks, but they do not change whose face it is
+    \item Built a 5-stage augmentation pipeline (\texttt{generate\_synthetic\_friends.py}):
+    \begin{itemize}
+        \item \textbf{Stage 1 — Face alignment:} use InsightFace (buffalo\_l model) to detect 5 facial keypoints and warp the face to a standard 256×256 frontal template — removes pose variation
+        \item \textbf{Stage 2 — Lighting:} apply gamma correction with $\gamma$ randomly chosen from $[0.55,\, 1.60]$ — simulates bright or dim lighting
+        \item \textbf{Stage 3 — Colour temperature:} randomly apply warm, cool, or neutral colour shift — simulates different camera sensors and light sources
+        \item \textbf{Stage 4 — Skin tone:} apply CLAHE (adaptive histogram equalisation) to the luminance channel in LAB colour space — normalises skin tone without changing hue
+        \item \textbf{Stage 5 — Camera quality and pose:} add Gaussian blur + random noise to simulate camera quality; add small in-plane rotation ($\pm 12°$) to simulate natural head tilt
+    \end{itemize}
+    \item Generated \textbf{15 synthetic images per person} from their 10 training photos (cycling through with different random parameters each time)
+\end{itemize}
+
+% ── Step 7 ────────────────────────────────────────────────────────────────────
+\section*{Step 7 \quad Fixed the Train/Test Split (Addressed the 100\% Accuracy Problem)}
+
+\begin{itemize}
+    \item An earlier version of the experiment gave \textbf{100\% accuracy on synthetic data} — the professor correctly identified this as unrealistic
+    \item The mistake: I had used all 15 photos per person to generate synthetic images, and then tested on those same 15 real photos
+    \item This is called \textbf{circular evaluation} — the test images had already been seen during the generation step, so the model had an unfair advantage
+    \item Fix: enforced a strict 10/5 split:
+    \begin{itemize}
+        \item \textbf{First 10 photos} per person → used for registration (Experiment 1) or as source for synthetic generation (Experiment 2)
+        \item \textbf{Last 5 photos} per person → held out completely, never touched during either registration or generation
+        \item \textbf{Both experiments use the exact same held-out 5 photos} for testing — so any difference in results is due to the training data type only
+    \end{itemize}
+    \item After this fix, results became realistic and properly comparable
+\end{itemize}
+
+% ── Step 8 ────────────────────────────────────────────────────────────────────
+\section*{Step 8 \quad Ran Experiment 2 (Synthetic Registration) with the Fixed Setup}
+
+\begin{itemize}
+    \item Registered all 4 friends using their 15 synthetic images (generated from their 10 training photos)
+    \item Tested on the same held-out 5 real photos per person + same 20 AI impostors as Experiment 1
+    \item Results: \textbf{FAR = 0\%, FRR = 5\%, Accuracy = 97.5\%}
+    \begin{itemize}
+        \item 19 out of 20 genuine queries verified correctly
+        \item 1 rejection: one of \textit{otto}'s photos scored 11.47 (just above threshold 10.0)
+        \item All 20 AI impostors correctly rejected (FAR = 0\%)
+    \end{itemize}
+\end{itemize}
+
+% ── Step 9 ────────────────────────────────────────────────────────────────────
+\section*{Step 9 \quad Compared the Two Experiments and Evaluated the Hypothesis}
+
+\begin{itemize}
+    \item Side-by-side comparison:
+
+    \vspace{6pt}
+    \begin{center}
+    \begin{tabular}{lccc}
+    \toprule
+    Metric & Experiment 1 (Real) & Experiment 2 (Synthetic) & Difference \\
+    \midrule
+    FAR & 10.0\% & 0.0\% & $-$10.0 pp \\
+    FRR & 0.0\%  & 5.0\% & $+$5.0 pp \\
+    Accuracy & 95.0\% & 97.5\% & $+$2.5 pp \\
+    Friends verified & 20/20 & 19/20 & $-$1 \\
+    Impostors rejected & 18/20 & 20/20 & $+$2 \\
+    \bottomrule
+    \end{tabular}
+    \end{center}
+    \vspace{6pt}
+
+    \item The FAR gap is $-$10 percentage points, which is within the $\pm$15 pp threshold → \textbf{hypothesis confirmed}
+    \item Explained the FAR/FRR trade-off: the controlled synthetic pipeline produces tighter embedding clusters → clearer separation from impostors (lower FAR) but slightly less tolerance for natural variation in test photos (slightly higher FRR)
+    \item Otto's one false rejection is explained by this: his held-out test photo had more variation than the controlled synthetic training images could fully represent
+\end{itemize}
+
+% ── Step 10 ───────────────────────────────────────────────────────────────────
+\section*{Step 10 \quad Wrote the Zwischenbericht and Research Paper}
+
+\begin{itemize}
+    \item Wrote the full research paper in IEEE conference format (\texttt{IEEEtran}) using LaTeX
+    \item Paper includes: Abstract, Introduction, Background and Related Work, Hypothesis and Variables, Methodology (including the rejected approaches), Experimental Results, Discussion, Ethical Considerations, Conclusion and Future Work
+    \item Added 12 academic references including FaceNet (Schroff et al., 2015), NIST FRTE, InsightFace/ArcFace, GDPR, GAN papers (Goodfellow, StyleGAN2), and prior synthetic face recognition work (Wood et al., Bae et al.)
+    \item Also prepared a separate Zwischenbericht (interim report) marking which sections are complete and which are planned, with a timeline to mid-June
+    \item Planned next steps for the final paper:
+    \begin{itemize}
+        \item Full DET curve evaluation across multiple threshold values
+        \item Expanding the dataset (more users, more test images)
+        \item Potentially trying a GAN-based approach with fully AI-generated identities
+    \end{itemize}
+\end{itemize}
+
+\vspace{12pt}
+\hrule
+\vspace{8pt}
+\begin{center}
+\small\textit{Nour Ebid --- Seminar zu aktuellen Entwicklungen --- HTW Berlin --- SS 2026}
+\end{center}
+
+\end{document}
