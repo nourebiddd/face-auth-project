@@ -6,6 +6,15 @@
 **Course:** Seminar zu aktuellen Entwicklungen (M14) · M.Sc. Angewandte Informatik · HTW Berlin · SoSe 2026  
 **Supervisor:** Prof. Dr. Andrea Knaut
 
+![Python](https://img.shields.io/badge/Python-3-3776AB?logo=python&logoColor=white)
+![FaceNet](https://img.shields.io/badge/model-FaceNet%20(DeepFace)-informational)
+![InsightFace](https://img.shields.io/badge/alignment-InsightFace-informational)
+![Evaluation](https://img.shields.io/badge/evaluation-NIST%20FRTE--aligned-success)
+
+**In one sentence:** can a face login system work without storing anyone's real face photos? This project builds the system, a 5-stage synthetic-image pipeline, and a balanced evaluation (FMR, FNMR, DET curve, d′) to find out.
+
+**What I did:** designed the research question and evaluation protocol, built the enrollment/authentication system, implemented and iterated on the synthesis pipeline (including two rejected face-swap approaches), ran the experiments and wrote the paper (`paper/`).
+
 ---
 
 ## Overview
