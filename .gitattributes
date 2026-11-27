@@ -1,0 +1,2 @@
+# Count the paper as documentation so GitHub shows the repo as Python, not TeX
+paper/** linguist-documentation
