@@ -167,6 +167,31 @@ Two face-swap approaches were implemented and rejected before the pipeline above
 
 ---
 
+## Reproducing the Experiments
+
+```bash
+pip install -r requirements.txt
+
+# 1. Put photos in data/real_users/<name>/ (15 per person) and
+#    AI-generated impostors in data/synthetic_raw/synthetic_person_XXX/img_0000.jpg
+python convert.py data/real_users/<name>   # only if photos are HEIC
+
+# 2. Build the synthetic enrollment set (Experiment 2)
+python generate_synthetic_friends.py
+
+# 3. Run both experiments — each writes metrics *and* raw scores to results/
+python exp1_test.py        # → results/exp1_fair_results.json
+python exp2_test.py        # → results/exp2_results.json (compares against Exp 1)
+
+# 4. Plot the DET curve from the saved scores
+python det_curve.py        # → results/det_curve.png
+```
+
+> `data/` is git-ignored on purpose — it contains biometric data. Delete
+> `data/registered_users_*.json` to force re-enrollment.
+
+---
+
 ## Tech Stack
 
 | Component | Tool |

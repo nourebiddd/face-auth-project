@@ -3,10 +3,13 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import os
+import json
 
 os.makedirs('results', exist_ok=True)
 
-# Genuine scores — real distances from your experiments
+# Fallback score lists (typed in from an earlier run). They are only used when
+# the experiment scripts have not yet written raw scores to results/*.json.
+# Re-run exp1_test.py and exp2_test.py to regenerate the curve from real output.
 genuine_exp1 = [8.02, 7.47, 7.41, 6.52, 6.50,
                 0.93, 1.01, 1.98, 1.16, 1.25,
                 6.92, 6.34, 6.33, 4.93, 3.43,
@@ -26,6 +29,26 @@ impostor_exp2 = [13.20, 11.40, 12.84, 11.85, 13.69,
                  13.49, 13.09, 11.58, 12.84, 12.02,
                  13.31, 11.52, 12.91, 11.90, 13.75,
                  13.55, 13.15, 11.80, 12.89, 12.10]
+
+
+
+def load_scores(path, fallback_genuine, fallback_impostor, label):
+    """Load genuine/impostor scores saved by exp1_test.py / exp2_test.py."""
+    if os.path.exists(path):
+        with open(path) as f:
+            data = json.load(f)
+        if data.get('genuine_scores') and data.get('impostor_scores'):
+            print(f"[INFO] {label}: using scores from {path}")
+            return data['genuine_scores'], data['impostor_scores']
+    print(f"[WARN] {label}: no saved scores in {path} — using fallback lists "
+          "in det_curve.py (re-run the experiment to regenerate)")
+    return fallback_genuine, fallback_impostor
+
+
+genuine_exp1, impostor_exp1 = load_scores(
+    'results/exp1_fair_results.json', genuine_exp1, impostor_exp1, 'Exp 1')
+genuine_exp2, impostor_exp2 = load_scores(
+    'results/exp2_results.json', genuine_exp2, impostor_exp2, 'Exp 2')
 
 thresholds = np.linspace(0, 20, 2000)
 

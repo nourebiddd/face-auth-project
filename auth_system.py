@@ -21,7 +21,7 @@ def register_users(users_dir="data/real_users"):
             try:
                 emb = DeepFace.represent(img_path, model_name=MODEL, enforce_detection=False)
                 embeddings.append(emb[0]["embedding"])
-            except: pass
+            except Exception: pass
         if embeddings:
             db[person] = np.mean(embeddings, axis=0).tolist()
             print(f"  ✅ {person} registered ({len(embeddings)} images)")
@@ -36,7 +36,7 @@ def authenticate(img_path):
     try:
         emb = DeepFace.represent(img_path, model_name=MODEL, enforce_detection=False)
         query = np.array(emb[0]["embedding"])
-    except:
+    except Exception:
         print("❌ No face detected in image")
         return
 

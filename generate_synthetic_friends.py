@@ -15,6 +15,10 @@ FRIENDS = ['amr', 'adel', 'otto', 'mazen']
 REAL_DIR = 'data/real_users'
 OUTPUT_DIR = 'data/synthetic_friends'
 IMAGES_PER_PERSON = 15
+SEED = 42  # fixed seed so the synthetic enrollment set is reproducible
+
+random.seed(SEED)
+np.random.seed(SEED)
 
 app = FaceAnalysis(name='buffalo_l', providers=['CPUExecutionProvider'])
 app.prepare(ctx_id=-1, det_size=(640, 640))
