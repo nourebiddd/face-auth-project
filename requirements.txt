@@ -1,0 +1,18 @@
+# Core experiments (exp1_test.py, exp2_test.py, auth_system.py)
+deepface
+tf-keras
+numpy
+matplotlib
+
+# Synthetic pipeline (generate_synthetic_friends.py, cluster_synthetic.py)
+insightface
+onnxruntime
+opencv-contrib-python   # includes cv2.face (LBPH) used by encode.py / main.py
+Pillow
+pillow-heif
+scikit-learn
+requests
+
+# Earlier baseline scripts (train_*.py, compare_models.py, check_faces.py)
+face_recognition
+seaborn

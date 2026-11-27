@@ -7,6 +7,7 @@ SYNTH_USERS_DIR = 'data/synthetic_friends'
 DB_FILE = 'data/registered_users_synthetic.json'
 REAL_USERS_DIR = 'data/real_users'
 SYNTH_RAW_DIR = 'data/synthetic_raw'
+EXP1_RESULTS = 'results/exp1_fair_results.json'
 MODEL = 'Facenet'
 THRESHOLD = 10.0
 FRIENDS = ['amr', 'adel', 'otto', 'mazen']
@@ -26,7 +27,7 @@ def register_synthetic_users():
             try:
                 emb = DeepFace.represent(img_path, model_name=MODEL, enforce_detection=False)
                 embeddings.append(emb[0]['embedding'])
-            except:
+            except Exception:
                 pass
         if embeddings:
             db[person] = np.mean(embeddings, axis=0).tolist()
@@ -48,7 +49,7 @@ def authenticate(img_path, db):
                 best_match = person
         verified = best_score < THRESHOLD
         return verified, best_match, best_score
-    except:
+    except Exception:
         return None, None, None
 
 def run_test(db):
@@ -60,6 +61,7 @@ def run_test(db):
     print('FRIENDS TEST — registered from SYNTHETIC, tested on REAL (held-out)')
     print('='*65)
     tp, fn = 0, 0
+    genuine_scores = []
     for person in FRIENDS:
         real_dir = os.path.join(REAL_USERS_DIR, person)
         all_imgs = sorted([f for f in os.listdir(real_dir)
@@ -72,6 +74,7 @@ def run_test(db):
                 continue
             status = '✅ VERIFIED' if verified else '❌ REJECTED'
             print(f'{status} | True: {person:<8} | Predicted: {match:<8} | Score: {score:.2f}')
+            genuine_scores.append(round(float(score), 4))
             if verified:
                 tp += 1
             else:
@@ -81,6 +84,7 @@ def run_test(db):
     print('INTRUDER TEST (20 AI strangers)')
     print('='*65)
     tn, fp = 0, 0
+    impostor_scores = []
     for i in range(1, 21):
         img_path = os.path.join(SYNTH_RAW_DIR, f'synthetic_person_{i:03d}', 'img_0000.jpg')
         if not os.path.exists(img_path):
@@ -90,6 +94,7 @@ def run_test(db):
             continue
         status = '✅ VERIFIED' if verified else '❌ REJECTED'
         print(f'{status} | True: intruder  | Predicted: {match:<8} | Score: {score:.2f}')
+        impostor_scores.append(round(float(score), 4))
         if not verified:
             tn += 1
         else:
@@ -112,25 +117,37 @@ def run_test(db):
     print(f'FRR (False Reject Rate)     : {frr:.1f}%')
     print(f'Accuracy                    : {acc:.1f}%')
     print('='*65)
-    print('\nEXPERIMENT 1 vs EXPERIMENT 2 COMPARISON')
-    print('='*65)
-    print(f'{"Metric":<30} {"Exp 1 (Real)":<20} {"Exp 2 (Synthetic)":<20}')
-    print('-'*65)
-    print(f'{"FAR (False Accept Rate)":<30} {"10.0%":<20} {far:.1f}%')
-    print(f'{"FRR (False Reject Rate)":<30} {"0.0%":<20} {frr:.1f}%')
-    print(f'{"Accuracy":<30} {"96.7%":<20} {acc:.1f}%')
-    print(f'{"Friends Verified":<30} {"20/20":<20} {tp}/{total_friends}')
-    print(f'{"Intruders Rejected":<30} {"9/10":<20} {tn}/{total_intruders}')
-    print('='*65)
+    # Compare against the Exp 1 results actually produced by exp1_test.py
+    # (previously these were hard-coded and had drifted from the real run).
+    gap_far = None
+    if os.path.exists(EXP1_RESULTS):
+        with open(EXP1_RESULTS) as f:
+            exp1 = json.load(f)
+        exp1_friends = exp1['tp'] + exp1['fn']
+        exp1_intruders = exp1['tn'] + exp1['fp']
 
-    gap_far = far - 10.0
-    print(f'\nFAR Gap (Synthetic - Real): {gap_far:+.1f}%')
-    if abs(gap_far) <= 15.0:
-        print('HYPOTHESIS: CONFIRMED — gap within 15% threshold')
-        print('Synthetic data is a viable substitute for real data.')
+        print('\nEXPERIMENT 1 vs EXPERIMENT 2 COMPARISON')
+        print('='*65)
+        print(f'{"Metric":<30} {"Exp 1 (Real)":<20} {"Exp 2 (Synthetic)":<20}')
+        print('-'*65)
+        print(f'{"FAR (False Accept Rate)":<30} {str(exp1["FAR"]) + "%":<20} {far:.1f}%')
+        print(f'{"FRR (False Reject Rate)":<30} {str(exp1["FRR"]) + "%":<20} {frr:.1f}%')
+        print(f'{"Accuracy":<30} {str(exp1["accuracy"]) + "%":<20} {acc:.1f}%')
+        print(f'{"Friends Verified":<30} {str(exp1["tp"]) + "/" + str(exp1_friends):<20} {tp}/{total_friends}')
+        print(f'{"Intruders Rejected":<30} {str(exp1["tn"]) + "/" + str(exp1_intruders):<20} {tn}/{total_intruders}')
+        print('='*65)
+
+        gap_far = far - exp1['FAR']
+        print(f'\nFAR Gap (Synthetic - Real): {gap_far:+.1f}%')
+        if abs(gap_far) <= 15.0:
+            print('HYPOTHESIS: CONFIRMED — gap within 15% threshold')
+            print('Synthetic data is a viable substitute for real data.')
+        else:
+            print('HYPOTHESIS: REJECTED — gap exceeds 15% threshold')
+            print('Real data significantly outperforms synthetic data.')
     else:
-        print('HYPOTHESIS: REJECTED — gap exceeds 15% threshold')
-        print('Real data significantly outperforms synthetic data.')
+        print(f'\n[WARN] {EXP1_RESULTS} not found — run exp1_test.py first '
+              'to get the Exp 1 vs Exp 2 comparison.')
 
     result = {
         'experiment': 2,
@@ -139,7 +156,10 @@ def run_test(db):
         'FAR': round(far, 2),
         'FRR': round(frr, 2),
         'accuracy': round(acc, 2),
-        'far_gap_vs_exp1': round(gap_far, 2)
+        'threshold': THRESHOLD,
+        'genuine_scores': genuine_scores,
+        'impostor_scores': impostor_scores,
+        'far_gap_vs_exp1': round(gap_far, 2) if gap_far is not None else None
     }
     with open('results/exp2_results.json', 'w') as f:
         json.dump(result, f, indent=2)

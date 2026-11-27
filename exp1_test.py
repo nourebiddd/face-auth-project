@@ -29,7 +29,7 @@ def register_real_users():
             try:
                 emb = DeepFace.represent(img_path, model_name=MODEL, enforce_detection=False)
                 embeddings.append(emb[0]['embedding'])
-            except:
+            except Exception:
                 pass
         if embeddings:
             db[person] = np.mean(embeddings, axis=0).tolist()
@@ -50,7 +50,7 @@ def authenticate(img_path, db):
                 best_score = dist
                 best_match = person
         return best_score < THRESHOLD, best_match, best_score
-    except:
+    except Exception:
         return None, None, None
 
 def run_test(db):
@@ -62,6 +62,7 @@ def run_test(db):
     print('FRIENDS TEST (last 5 photos per person — never used in registration)')
     print('='*65)
     tp, fn = 0, 0
+    genuine_scores = []
     for person in FRIENDS:
         real_dir = os.path.join(REAL_USERS_DIR, person)
         all_imgs = sorted([f for f in os.listdir(real_dir)
@@ -73,6 +74,7 @@ def run_test(db):
                 continue
             status = '✅ VERIFIED' if verified else '❌ REJECTED'
             print(f'{status} | True: {person:<8} | Predicted: {match:<8} | Score: {score:.2f}')
+            genuine_scores.append(round(float(score), 4))
             if verified:
                 tp += 1
             else:
@@ -82,6 +84,7 @@ def run_test(db):
     print('INTRUDER TEST (20 AI strangers)')
     print('='*65)
     tn, fp = 0, 0
+    impostor_scores = []
     for i in range(1, 21):
         img_path = os.path.join(SYNTH_RAW_DIR, f'synthetic_person_{i:03d}', 'img_0000.jpg')
         if not os.path.exists(img_path):
@@ -91,6 +94,7 @@ def run_test(db):
             continue
         status = '✅ VERIFIED' if verified else '❌ REJECTED'
         print(f'{status} | True: intruder  | Predicted: {match:<8} | Score: {score:.2f}')
+        impostor_scores.append(round(float(score), 4))
         if not verified:
             tn += 1
         else:
@@ -100,7 +104,7 @@ def run_test(db):
     total_intruders = tn + fp
     far = fp / total_intruders * 100 if total_intruders > 0 else 0
     frr = fn / total_friends * 100 if total_friends > 0 else 0
-    acc = (tp + tn) / (total_friends + total_intruders) * 100
+    acc = (tp + tn) / (total_friends + total_intruders) * 100 if (total_friends + total_intruders) > 0 else 0
 
     print('\n' + '='*65)
     print('EXPERIMENT 1 RESULTS (fair split)')
@@ -123,7 +127,10 @@ def run_test(db):
         'tp': tp, 'fn': fn, 'tn': tn, 'fp': fp,
         'FAR': round(far, 2),
         'FRR': round(frr, 2),
-        'accuracy': round(acc, 2)
+        'accuracy': round(acc, 2),
+        'threshold': THRESHOLD,
+        'genuine_scores': genuine_scores,
+        'impostor_scores': impostor_scores,
     }
     with open('results/exp1_fair_results.json', 'w') as f:
         json.dump(result, f, indent=2)

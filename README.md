@@ -6,6 +6,15 @@
 **Course:** Seminar zu aktuellen Entwicklungen (M14) · M.Sc. Angewandte Informatik · HTW Berlin · SoSe 2026  
 **Supervisor:** Prof. Dr. Andrea Knaut
 
+![Python](https://img.shields.io/badge/Python-3-3776AB?logo=python&logoColor=white)
+![FaceNet](https://img.shields.io/badge/model-FaceNet%20(DeepFace)-informational)
+![InsightFace](https://img.shields.io/badge/alignment-InsightFace-informational)
+![Evaluation](https://img.shields.io/badge/evaluation-NIST%20FRTE--aligned-success)
+
+**In one sentence:** can a face login system work without storing anyone's real face photos? This project builds the system, a 5-stage synthetic-image pipeline, and a balanced evaluation (FMR, FNMR, DET curve, d′) to find out.
+
+**What I did:** designed the research question and evaluation protocol, built the enrollment/authentication system, implemented and iterated on the synthesis pipeline (including two rejected face-swap approaches), ran the experiments and wrote the paper (`paper/`).
+
 ---
 
 ## Overview
@@ -164,6 +173,31 @@ Two face-swap approaches were implemented and rejected before the pipeline above
 - **Enrolled users:** amr, adel, otto, mazen (4 male adults)
 - **Capture conditions:** Natural, uncontrolled — smartphone camera, varying lighting, background, pose
 - **Test set is identical for both experiments** — any metric difference is attributable solely to enrollment data type
+
+---
+
+## Reproducing the Experiments
+
+```bash
+pip install -r requirements.txt
+
+# 1. Put photos in data/real_users/<name>/ (15 per person) and
+#    AI-generated impostors in data/synthetic_raw/synthetic_person_XXX/img_0000.jpg
+python convert.py data/real_users/<name>   # only if photos are HEIC
+
+# 2. Build the synthetic enrollment set (Experiment 2)
+python generate_synthetic_friends.py
+
+# 3. Run both experiments — each writes metrics *and* raw scores to results/
+python exp1_test.py        # → results/exp1_fair_results.json
+python exp2_test.py        # → results/exp2_results.json (compares against Exp 1)
+
+# 4. Plot the DET curve from the saved scores
+python det_curve.py        # → results/det_curve.png
+```
+
+> `data/` is git-ignored on purpose — it contains biometric data. Delete
+> `data/registered_users_*.json` to force re-enrollment.
 
 ---
 
